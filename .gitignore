@@ -1,0 +1,5 @@
+/ReplayUdpPcap/obj
+/ReplayUdpPcap/bin
+/ReplayUdpPcap/*.user
+/.vs
+/ReplayUdpPcap/Properties/PublishProfiles/*.user

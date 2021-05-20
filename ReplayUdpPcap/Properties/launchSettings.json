@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "ReplayUdpPcap": {
+      "commandName": "Project",
+      "commandLineArgs": "omdc.onboarding.tools.pcap 100"
+    }
+  }
+}
