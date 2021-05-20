@@ -1,4 +1,8 @@
-﻿using System;
+﻿using PacketDotNet;
+using SharpPcap;
+using SharpPcap.LibPcap;
+using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Net.Sockets;
@@ -29,38 +33,74 @@ namespace ReplayUdpPcap
         static async Task SendAsync(string file, int rate, CancellationToken cancellation)
         {
             var stopwatch = Stopwatch.StartNew();
-            
-            using var udpClient = new UdpClient();
-            var count = 0;
-
-            var captures = PcapFileReader.Read(file);
-
-            Console.WriteLine("Send started");
-
-            foreach (var (capture, ipPacket, udpPacket) in captures)
+            try
             {
-                var address = ipPacket.DestinationAddress.ToString();
+                using var udpClient = new UdpClient();
+                var count = 0;
 
-                var requireTime = ++count * 1000 / rate;
-                var requirePause = requireTime - (int)stopwatch.Elapsed.TotalMilliseconds;
-                if (requirePause > 0)
+                var captures = Read(file);
+
+                Console.WriteLine("Send started");
+
+                foreach (var (capture, ipPacket, udpPacket) in captures)
                 {
-                    await Task.Delay(requirePause, cancellation);
+                    var address = ipPacket.DestinationAddress.ToString();
+
+                    var requireTime = ++count * 1000 / rate;
+                    var requirePause = requireTime - (int)stopwatch.Elapsed.TotalMilliseconds;
+                    if (requirePause > 0)
+                    {
+                        await Task.Delay(requirePause, cancellation);
+                    }
+
+                    cancellation.ThrowIfCancellationRequested();
+
+                    if (count % rate == 0)
+                    {
+                        Console.WriteLine($"sending {count}th packet...");
+                    }
+
+                    udpClient.Send(
+                        udpPacket.PayloadData, udpPacket.PayloadData.Length,
+                        address, udpPacket.DestinationPort);
                 }
 
-                cancellation.ThrowIfCancellationRequested();
+                Console.WriteLine("Send completed");
+            }
+            catch (Exception e)
+            {
+                Console.Error.WriteLine(e);
+                throw;
+            }
+        }
 
-                if (count % rate == 0)
+        private static IEnumerable<(RawCapture capture, IPv4Packet ipPacket, UdpPacket udpPacket)> Read(string file)
+        {
+            var device = new CaptureFileReaderDevice(file);
+            device.Open();
+
+            RawCapture capture;
+            while ((capture = device.GetNextPacket()) != null)
+            {
+                var packet = Packet.ParsePacket(capture.LinkLayerType, capture.Data);
+                if (packet.PayloadPacket is not IPv4Packet ipPacket)
                 {
-                    Console.WriteLine($"sending {count}th packet...");
+                    Console.WriteLine($"Skip packet {packet.PayloadPacket}");
+                    continue;
                 }
 
-                udpClient.Send(
-                    udpPacket.PayloadData, udpPacket.PayloadData.Length,
-                    address, udpPacket.DestinationPort);
+                if (ipPacket.Protocol != PacketDotNet.ProtocolType.Udp)
+                {
+                    Console.WriteLine($"Skip packet of protocol {ipPacket.Protocol}");
+                    continue;
+                }
+
+                var udpPacket = packet.Extract<UdpPacket>();
+
+                yield return (capture, ipPacket, udpPacket);
             }
 
-            Console.WriteLine("Send completed");
+            device.Close();
         }
     }
 }
