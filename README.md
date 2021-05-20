@@ -9,7 +9,7 @@ The first parameter is *.pcap* filename. The second one is send rate in *packet 
 
 ## Download
 
-Please download the executable from [publish](https://github.com/tommy-iasia/ReplayUdpPcap/tree/master/publish) folder,  
+Please download the x64 executable from [publish](https://github.com/tommy-iasia/ReplayUdpPcap/tree/master/publish) folder,  
 or compile and publish the project with *.NET 5.0*
 
 ## SharpPcap
