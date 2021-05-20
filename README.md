@@ -14,4 +14,4 @@ or compile and publish the project with *.NET 5.0*
 
 ## SharpPcap
 
-This project solely depends on SharpPcap for digesting *.pcap* file.
+This project solely depends on **SharpPcap** for digesting *.pcap* file.
