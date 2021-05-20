@@ -50,7 +50,7 @@ namespace ReplayUdpPcap
 
                 cancellation.ThrowIfCancellationRequested();
 
-                if (count % 10 * rate == 0)
+                if (count % rate == 0)
                 {
                     Console.WriteLine($"sending {count}th packet...");
                 }
