@@ -3,3 +3,4 @@
 /ReplayUdpPcap/*.user
 /.vs
 /ReplayUdpPcap/Properties/PublishProfiles/*.user
+/publish/*.pcap
